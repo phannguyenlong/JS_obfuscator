@@ -32,9 +32,9 @@ function generateString(length) {
 
 function generateNumber() {
     let max = 10000
-    let min = -10000
+    let min = 1
     let places = 5 // num of decimal number
-    let value = Math.floor((Math.random() * (max - min + 1)) + min);
+    let value = Math.floor((Math.random() * (max - min + 1) + min));
     return value;
 }
 
@@ -42,10 +42,9 @@ function addDeadCode(node) {
     let compareValue = compareOptions[Math.floor(Math.random() * 3)]
     let operandsValue = operandsOptions[Math.floor(Math.random() * 4)]
     let randomVarName = generateString(5)
-    let randomNum = Math.random()
+    let randomNum = generateNumber()
     let randomNumCompare = compareValue == "<" ? randomNum - Math.random() : randomNum + Math.random() // calculate number to make if all retun false
     let insertCode = `let ${randomVarName} = ${randomNum};if (${randomVarName} ${compareValue} ${randomNumCompare}) {${randomVarName} = ${randomVarName}${operandsValue}${Math.random()};return ${randomVarName}}`
-    console.log(insertCode)
     let insertNode = esprima.parseScript(insertCode, {tolerant: true}) // alow tolerant for bypass error checking
     preppendCode(node,insertNode)
 }
@@ -61,7 +60,7 @@ function addRedundantOperand(node) {
                 // ex: return a ==> a = a + 1234;return a / 1234
                 if (node.argument.type == "BinaryExpression" || node.argument.type == "Identifier") {
                     let randomVarName = generateString(5)
-                    let randomNum = Math.random()
+                    let randomNum = generateNumber()
 
                     // find operands and it opposite
                     let operandsValue = operandsOptions[Math.floor(Math.random() * 4)]
