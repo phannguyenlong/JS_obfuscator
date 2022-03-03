@@ -48,4 +48,4 @@ console.log(js)
 fs.writeFileSync(outputFile, js);
 
 // compress
-// compress(outDir, outputFile)
+compress(outDir, outputFile)

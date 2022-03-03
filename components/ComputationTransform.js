@@ -38,6 +38,9 @@ function generateNumber() {
     return value;
 }
 
+/**
+ * function for adding dead/irrelevant code to current code block
+ */
 function addDeadCode(node) {
     let compareValue = compareOptions[Math.floor(Math.random() * 3)]
     let operandsValue = operandsOptions[Math.floor(Math.random() * 4)]
@@ -49,6 +52,10 @@ function addDeadCode(node) {
     preppendCode(node,insertNode)
 }
 
+/**
+ * function for inserting redundant operand to current calculation 
+ * by generating exprerssion from random number 
+ */
 function addRedundantOperand(node) {
     estraverse.traverse(node, {
         enter: function (node, parent) {
@@ -83,11 +90,35 @@ function addRedundantOperand(node) {
     })
 }
 
+/**
+ * function for extending condition of if or while statement by adding new condition
+ * 2 type of added condtion: || and && 
+ */
 function extendCondition(node) {
     estraverse.traverse(node, {
         enter: function (node, parent) {
-            if (node.type == "IfStatement") {
-                console.log(node)
+            if (node.type == "IfStatement" || node.type == "WhileStatement") {
+                let conditons = ["||", "&&"]
+                let conditonValue = conditons[Math.floor(Math.random() * 2)]
+                let compareValue = compareOptions[Math.floor(Math.random() * 3)]
+
+                // create number for compare
+                let randomNum = generateNumber()
+                let compareRandomNum
+                if (compareValue == "==") {
+                    compareRandomNum = randomNum
+                } else {
+                    let t = Math.random()
+                    compareRandomNum = compareValue == "<" ? randomNum + t : randomNum - t
+                }
+
+                // generate insert code and node
+                let orginal_cond = escodegen.generate(node.test) // get old expression
+                let insertCode = orginal_cond +  ` ${conditonValue} ${randomNum}${compareValue}${compareRandomNum}`
+                let insertNode = esprima.parseScript(insertCode, { tolerant: true }) // alow tolerant for bypass error checking
+
+                // replace current condition with new condition                
+                node.test = insertNode.body[0].expression
             }
         }
     })
@@ -100,6 +131,7 @@ module.exports.computationalTransform = function (tree) {
             if (node.type == "FunctionDeclaration") {
                 addDeadCode(node)
                 addRedundantOperand(node)
+                extendCondition(node)
             }
         }
     })
