@@ -92,7 +92,8 @@ function addRedundantOperand(node) {
 
 /**
  * function for extending condition of if or while statement by adding new condition
- * 2 type of added condtion: || and && 
+ * 2 type of added condtion: || (add Pf) and && (add Pt)
+ * Pf: always false condition, Pt: always true conditions
  */
 function extendCondition(node) {
     estraverse.traverse(node, {
@@ -106,10 +107,13 @@ function extendCondition(node) {
                 let randomNum = generateNumber()
                 let compareRandomNum
                 if (compareValue == "==") {
-                    compareRandomNum = randomNum
+                    compareRandomNum = conditonValue == "&&" ? randomNum : randomNum + generateNumber()
                 } else {
                     let t = Math.random()
-                    compareRandomNum = compareValue == "<" ? randomNum + t : randomNum - t
+                    if (conditonValue == "&&") 
+                        compareRandomNum = compareValue == "<" ? randomNum + t : randomNum - t
+                    else // if condition is "||" do the opposite
+                        compareRandomNum = compareValue == ">" ? randomNum + t : randomNum - t
                 }
 
                 // generate insert code and node
