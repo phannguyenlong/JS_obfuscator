@@ -3,7 +3,7 @@ const esprima = require('esprima')
 let escodegen = require('escodegen')
 
 // crafted module
-const { generateString } = require('../util/util')
+const { generateString, generateNumber } = require('../util/util')
 
 /**
  * Group irrelevant code to a function
@@ -187,10 +187,68 @@ function changeFunctionCall(newFunction, arrOldFunc, node, ifCon1, ifCon2, ifCon
     }
 }
 
+/**
+ * Function for performing clone techinque by 
+ * gengerate 2 version of 1 code (1 buggy and one normal)
+ * Buggy version: change name (by add _ + 2 random char) and 1 line of bug code
+ * Finnally, change to call statement: a = test() => a = 234> 2 ? test() : test_wx()
+ * @param {} node root node of the program
+ */
+function cloneCode(root) {
+    estraverse.traverse(root, {
+        enter: function (node, parent) {
+            if (node.type == "FunctionDeclaration") {
+                const operandsOptions = ["+", "-", "*", "/"]
+                const compareOptions = [">", "<", "=="]
+
+                // create a clone Node of that function
+                let cloneNode = JSON.parse(JSON.stringify(node));
+
+                // rename and make it buggy
+                cloneNode.id.name = cloneNode.id.name + "_" + generateString(2)
+                let buggyCode = `let ${generateString(5)} = ${generateString(5)} ${operandsOptions[Math.floor(Math.random() * 4)]} ${generateString(5)}`
+                let buggyNode = esprima.parseScript(buggyCode, { tolerant: true })
+                // add buggy code to clone function
+                cloneNode.body.body = [...buggyNode.body, ...cloneNode.body.body]
+
+                // add it to main code
+                root.body = [...root.body, cloneNode]
+
+                // change function call to increase confusion
+                estraverse.replace(root, {
+                    enter: function (nodee, parent) { // nodee for seperate with node from above
+                        if (nodee.type == "CallExpression" && nodee.callee.name == node.id.name) {
+                            // cloneNodee
+                            let cloneNodee = JSON.parse(JSON.stringify(nodee));
+                            cloneNodee.callee.name = cloneNode.id.name
+
+                            // calcute to conditon always true
+                            let compareValue = compareOptions[Math.floor(Math.random() * 3)]
+                            let randomNum = generateNumber()
+                            let randomNumCompare
+                            if (compareValue == "==")
+                                randomNumCompare = randomNum
+                            else 
+                                randomNumCompare = compareValue == "<" ? randomNum + generateNumber() : randomNum - generateNumber()
+                            
+                            //generate code
+                            let insertCode = `${randomNum} ${compareValue} ${randomNumCompare} ? ${escodegen.generate(nodee)} : ${escodegen.generate(cloneNodee)}`
+                            let insertNode = esprima.parseScript(insertCode, { tolerant: true })
+                            // replace new code to source
+                            parent.init = insertNode.body[0].expression
+                        }
+                    }
+                })
+            }
+        }
+    })
+}
+
 module.exports.aggegationTransform = function (tree) {
     estraverse.traverse(tree, {
         enter: function (node, parent) {
             if (node.type == "Program") {
+                cloneCode(node)
                 interleavingCode(node)
                 inLiningCode(node)
             }

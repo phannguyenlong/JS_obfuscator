@@ -7,3 +7,11 @@ module.exports.generateString = function (length) {
     }
     return result;
 }
+
+module.exports.generateNumber = function () {
+    let max = 10000
+    let min = 1
+    let places = 5 // num of decimal number
+    let value = Math.floor((Math.random() * (max - min + 1) + min));
+    return value;
+}

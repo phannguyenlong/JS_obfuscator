@@ -42,7 +42,7 @@ let tree = esprima.parseScript(fileContent)
 // perform computationalTransform
 computationalTransform(tree)
 aggegationTransform(tree)
-computationalTransform(tree) // add more rows :))
+// computationalTransform(tree) // add more rows :))
 
 // generate js code form AST tree
 var js = escodegen.generate(tree);
