@@ -1,10 +1,13 @@
 const estraverse = require('estraverse');
 const esprima = require('esprima')
 let escodegen = require('escodegen')
-const {generateString} = require('../util/util')
+
+// crafted module
+const { generateString } = require('../util/util')
 
 /**
  * Group irrelevant code to a function
+ * Notice: only work with the code that is not in function
  * @param node : recieve root node of the program
  */
 function inLiningCode(node) {
@@ -43,11 +46,120 @@ function inLiningCode(node) {
     node.body = varialeDeclareNode.body.concat(node.body)
 }
 
+/**
+ * grouping irrelevant function together and adding extra variable
+ * Can group in 2 forms: group 2 or 3 functions into 1 funciton
+ * Condition for group: number of funcs >= 3
+ * @param {*} node : recieve root node of the program
+ */
+function interleavingCode(node) {
+    let funcArr = [] // array for holding all function nodes
+    estraverse.traverse(node, {
+        enter: function (node, parent) {
+            if (node.type == "FunctionDeclaration") 
+                funcArr.push(node)
+        }
+    })
+
+    if (funcArr.length > 3) { // case number of func > 3
+
+    } else if (funcArr.length == 3) { // case number of func == 3
+
+    } else if (funcArr.length == 2) { // case number of func == 2
+        // variable declare
+        let typeVarName = generateString(5)
+        let typeVal1 = generateString(5)
+        let typeVal2 = generateString(5)
+        let funcName = generateString(5)
+
+        // generate new function
+        let newFunctionCode = `function ${funcName}(${typeVarName})\n{if (${typeVarName} == "${typeVal1}") {} else if (${typeVarName} == "${typeVal2}") {}}`
+        let newFunctionNode = esprima.parseScript(newFunctionCode)
+
+        // handle param of each function
+        if (funcArr[0].params.length == funcArr[1].params.length) { // if 2 func has same param number
+            for (let i = 0; i < funcArr[0].params.length; i++) {
+                let randomVarName = generateString(5)
+                changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
+                changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
+            }
+            newFunctionNode.body[0].params.push(...funcArr[0].params) // update new functon param
+        } else {
+            let params = funcArr[0].params.length > funcArr[1].params.length ? funcArr[0].params : funcArr[1].params
+            for (let i = 0; i < params.length; i++) {
+                let randomVarName = generateString(5)
+                if (funcArr[0].params[i]) 
+                    changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
+                if (funcArr[1].params[i])
+                    changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
+            }
+            newFunctionNode.body[0].params.push(...funcArr[0].params) // update new functon param
+        }
+
+        // merge 2 old functions code into new function
+        let ifBlock = newFunctionNode.body[0].body.body[0] // extract the if block of code
+        ifBlock.consequent = funcArr[0].body // add function body to if stm
+        ifBlock.alternate.consequent = funcArr[1].body // add function body to if stm
+        
+        // remove old function and change function call
+        removeOldFunction(funcArr, node)
+        changeFunctionCall(newFunctionNode, funcArr, node, typeVal1, typeVal2)
+
+        // append new function to program
+        node.body = [...node.body, ...newFunctionNode.body]
+    } // this feature will not run if program has only 1 function
+}
+
+// function for changing name of variable inside a node
+function changeNameOfVariableOfNode(oldName, newName, node) {
+    estraverse.traverse(node, {
+        enter: function (node, parent) {
+            if (node.type == "Identifier") {
+                if (node.name == oldName) {
+                    node.name = newName
+                }
+            }
+        }
+    })
+}
+// remove old function (which is replace by new function by Interneleaving method)
+function removeOldFunction(oldFuncArr, node) {
+    for (let i = 0; i < oldFuncArr.length; i++) {
+        estraverse.replace(node, {
+            enter: function (node, parent) {
+                if (node.type == "FunctionDeclaration") {
+                    if (node.id.name == oldFuncArr[i].id.name)
+                        this.remove()
+                }
+            }
+        })
+    }
+}
+// change function call of original code to new function call
+function changeFunctionCall(newFunction, arrOldFunc, node, ifCon1, ifCon2, ifCon3) {
+    let newFuncName = newFunction.body[0].id.name
+    let conditionsArr = [ifCon1, ifCon2, ifCon3] // array for holding conditions for each if statment for choosing correct function 
+    for (let i = 0; i < arrOldFunc.length; i++) {
+        estraverse.replace(node, {
+            enter: function (node, parent) {
+                if (node.type == "CallExpression") {
+                    if (node.callee.name == arrOldFunc[i].id.name) {
+                        let newNode = esprima.parseScript(`${newFuncName}("${conditionsArr[i]}")`, { tolerant: true })
+                        newNode.body[0].expression.arguments.push(...node.arguments)
+                        return newNode.body[0].expression
+                    }
+               } 
+            }
+        })
+    }
+}
+
 module.exports.aggegationTransform = function (tree) {
     estraverse.traverse(tree, {
         enter: function (node, parent) {
             if (node.type == "Program") {
-                inLiningCode(node)
+                interleavingCode(node)
+                // inLiningCode(node)
             }
         }
     })
