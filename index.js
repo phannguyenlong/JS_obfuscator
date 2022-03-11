@@ -33,7 +33,7 @@ function compress(outDir, outFile) {
 }
 
 // read and parse orginal code
-let inputFile = "./sample/sample.js"
+let inputFile = "./sample/5_func_sample.js"
 let outputFile = "./out/obfus_sample.js"
 let outDir = "./out"
 let fileContent = fs.readFileSync(inputFile, 'utf-8')
@@ -42,9 +42,11 @@ let tree = esprima.parseScript(fileContent)
 // perform computationalTransform
 computationalTransform(tree)
 aggegationTransform(tree)
+computationalTransform(tree) // add more rows :))
 
 // generate js code form AST tree
 var js = escodegen.generate(tree);
+console.log("======================Final JS======================\n")
 console.log(js)
 fs.writeFileSync(outputFile, js);
 

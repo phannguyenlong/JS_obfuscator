@@ -62,21 +62,30 @@ function interleavingCode(node) {
     })
 
     if (funcArr.length > 3) { // case number of func > 3
-
+        for (let i = 0; i < funcArr.length; i += 2) {
+            if (i == funcArr.length - 3) { // if num of func left is 3 => 3 func mode
+                let tempFunArr = [funcArr[i], funcArr[i + 1], funcArr[i + 2]] // extract 3 ele
+                interleavingFunction(node, tempFunArr, true)
+                break
+            } else { // otherwise 2 function mode
+                let tempFunArr = [funcArr[i], funcArr[i+1]] // extract 2 ele
+                interleavingFunction(node, tempFunArr, false)
+            }
+        }
     } else if (funcArr.length == 3) { // case number of func == 3
-        interleaving2Function(node, funcArr, true)
+        interleavingFunction(node, funcArr, true)
     } else if (funcArr.length == 2) { // case number of func == 2
-        interleaving2Function(node, funcArr, false)
+        interleavingFunction(node, funcArr, false)
     } // this feature will not run if program has only 1 function
 }
 /**
  * Function handling interleaving process of 2 and 3 function
  * Return only function which contain interleave code
- * @param {*} node program code
+ * @param {*} node root node of the program
  * @param {*} funcArr list of function need to interleaving
  * @param {*} is3Function true if interleaving 3 function, false mean interleaving 2 functions
  */
-function interleaving2Function(node, funcArr, is3Function) {
+function interleavingFunction(node, funcArr, is3Function) {
     // variable declare
     let typeVarName = generateString(5)
     let typeVal1 = generateString(5)
@@ -183,7 +192,7 @@ module.exports.aggegationTransform = function (tree) {
         enter: function (node, parent) {
             if (node.type == "Program") {
                 interleavingCode(node)
-                // inLiningCode(node)
+                inLiningCode(node)
             }
         }
     })
