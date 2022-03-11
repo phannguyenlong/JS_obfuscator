@@ -64,50 +64,74 @@ function interleavingCode(node) {
     if (funcArr.length > 3) { // case number of func > 3
 
     } else if (funcArr.length == 3) { // case number of func == 3
-
+        interleaving2Function(node, funcArr, true)
     } else if (funcArr.length == 2) { // case number of func == 2
-        // variable declare
-        let typeVarName = generateString(5)
-        let typeVal1 = generateString(5)
-        let typeVal2 = generateString(5)
-        let funcName = generateString(5)
+        interleaving2Function(node, funcArr, false)
+    } // this feature will not run if program has only 1 function
+}
+/**
+ * Function handling interleaving process of 2 and 3 function
+ * Return only function which contain interleave code
+ * @param {*} node program code
+ * @param {*} funcArr list of function need to interleaving
+ * @param {*} is3Function true if interleaving 3 function, false mean interleaving 2 functions
+ */
+function interleaving2Function(node, funcArr, is3Function) {
+    // variable declare
+    let typeVarName = generateString(5)
+    let typeVal1 = generateString(5)
+    let typeVal2 = generateString(5)
+    let typeVal3 = generateString(5) // use for 3 functions mode
+    let funcName = generateString(5)
 
-        // generate new function
-        let newFunctionCode = `function ${funcName}(${typeVarName})\n{if (${typeVarName} == "${typeVal1}") {} else if (${typeVarName} == "${typeVal2}") {}}`
-        let newFunctionNode = esprima.parseScript(newFunctionCode)
+    // generate new function
+    let newFunctionCode = `function ${funcName}(${typeVarName})\n{if (${typeVarName} == "${typeVal1}") {} else if (${typeVarName} == "${typeVal2}") {}`
+    newFunctionCode += is3Function ? ` else if (${typeVarName} == "${typeVal3}") {}}` : "}"
+    let newFunctionNode = esprima.parseScript(newFunctionCode)
 
-        // handle param of each function
-        if (funcArr[0].params.length == funcArr[1].params.length) { // if 2 func has same param number
-            for (let i = 0; i < funcArr[0].params.length; i++) {
-                let randomVarName = generateString(5)
-                changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
-                changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
-            }
-            newFunctionNode.body[0].params.push(...funcArr[0].params) // update new functon param
-        } else {
-            let params = funcArr[0].params.length > funcArr[1].params.length ? funcArr[0].params : funcArr[1].params
-            for (let i = 0; i < params.length; i++) {
-                let randomVarName = generateString(5)
-                if (funcArr[0].params[i]) 
-                    changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
-                if (funcArr[1].params[i])
-                    changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
-            }
-            newFunctionNode.body[0].params.push(...funcArr[0].params) // update new functon param
+    // handle param of each function
+    // check if they has same number of params or not
+    if ((funcArr[0].params.length == funcArr[1].params.length && !is3Function) // 2 function mode
+        || (funcArr[0].params.length == funcArr[1].params.length && funcArr[0].params.length == funcArr[2].params.length && is3Function)) // 3 function mode
+    {
+        for (let i = 0; i < funcArr[0].params.length; i++) {
+            let randomVarName = generateString(5)
+            changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
+            changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
+            if (is3Function) changeNameOfVariableOfNode(funcArr[2].params[i].name, randomVarName, funcArr[2])
         }
+        newFunctionNode.body[0].params.push(...funcArr[0].params) // update new functon param
+    } else {
+        let params = funcArr[0].params.length > funcArr[1].params.length ? funcArr[0].params : funcArr[1].params
+        if (is3Function) params = funcArr[2].params.length > params.length ? funcArr[2].params : params // for 3 func mode
+        for (let i = 0; i < params.length; i++) {
+            let randomVarName = generateString(5)
+            if (funcArr[0].params[i]) 
+                changeNameOfVariableOfNode(funcArr[0].params[i].name, randomVarName, funcArr[0])
+            if (funcArr[1].params[i])
+                changeNameOfVariableOfNode(funcArr[1].params[i].name, randomVarName, funcArr[1])
+            if (is3Function) // for 3 func mode
+                if (funcArr[2].params[i])
+                    changeNameOfVariableOfNode(funcArr[2].params[i].name, randomVarName, funcArr[2])
+        }
+        newFunctionNode.body[0].params.push(...params) // update new functon param
+    }
 
-        // merge 2 old functions code into new function
-        let ifBlock = newFunctionNode.body[0].body.body[0] // extract the if block of code
-        ifBlock.consequent = funcArr[0].body // add function body to if stm
-        ifBlock.alternate.consequent = funcArr[1].body // add function body to if stm
-        
-        // remove old function and change function call
-        removeOldFunction(funcArr, node)
+    // merge 2 or 3 old functions code into new function
+    let ifBlock = newFunctionNode.body[0].body.body[0] // extract the if block of code
+    ifBlock.consequent = funcArr[0].body // add function body to if stm
+    ifBlock.alternate.consequent = funcArr[1].body // add function body to if stm
+    if (is3Function) ifBlock.alternate.alternate = funcArr[2].body // for 3 func mode
+    
+    // remove old function and change function call
+    removeOldFunction(funcArr, node)
+    if (is3Function) // for 3 func mode
+        changeFunctionCall(newFunctionNode, funcArr, node, typeVal1, typeVal2, typeVal3)
+    else
         changeFunctionCall(newFunctionNode, funcArr, node, typeVal1, typeVal2)
 
-        // append new function to program
-        node.body = [...node.body, ...newFunctionNode.body]
-    } // this feature will not run if program has only 1 function
+    // append new function to program
+    node.body = [...node.body, ...newFunctionNode.body]
 }
 
 // function for changing name of variable inside a node
