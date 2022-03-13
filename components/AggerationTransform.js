@@ -3,7 +3,7 @@ const esprima = require('esprima')
 let escodegen = require('escodegen')
 
 // crafted module
-const { generateString, generateNumber } = require('../util/util')
+const { generateString, generateNumber, setDefaults } = require('../util/util')
 
 /**
  * Group irrelevant code to a function
@@ -244,13 +244,23 @@ function cloneCode(root) {
     })
 }
 
-module.exports.aggegationTransform = function (tree) {
+let defaults = {
+    cloneCode: true,
+    interleavingCode: true,
+    inLiningCode: true
+}
+module.exports.aggegationTransform = function (tree, options = defaults) {
+    options = setDefaults(options, defaults);
+    
     estraverse.traverse(tree, {
         enter: function (node, parent) {
             if (node.type == "Program") {
-                cloneCode(node)
-                interleavingCode(node)
-                inLiningCode(node)
+                if (options.cloneCode)
+                    cloneCode(node)
+                if (options.interleavingCode)
+                    interleavingCode(node)
+                if (options.inLiningCode)
+                    inLiningCode(node)
             }
         }
     })

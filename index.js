@@ -41,9 +41,17 @@ let fileContent = fs.readFileSync(inputFile, 'utf-8')
 let tree = esprima.parseScript(fileContent)
 
 // perform computationalTransform
-computationalTransform(tree)
-aggegationTransform(tree)
-// computationalTransform(tree) // add more rows :))
+computationalTransform(tree, {
+  addDeadCode: true,
+  addRedundantOperand: true,
+  extendCondition: true,
+});
+aggegationTransform(tree, {
+    cloneCode: true,
+    interleavingCode: true,
+    inLiningCode: true
+})
+computationalTransform(tree, {addDeadCode: true}) // add more rows :))
 orderingCode(tree)
 
 // generate js code form AST tree

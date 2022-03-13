@@ -15,3 +15,17 @@ module.exports.generateNumber = function () {
     let value = Math.floor((Math.random() * (max - min + 1) + min));
     return value;
 }
+
+/**
+ * compare input option with defaults fields
+ * @param {*} options user input value
+ * @param {*} defaults default option of that method
+ */
+module.exports.setDefaults = function (options, defaults) {
+    for (let option in defaults) {
+        if (!options.hasOwnProperty(option)) {
+            options[option] = defaults[option]
+        }
+    }
+    return options
+}

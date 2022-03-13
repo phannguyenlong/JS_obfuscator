@@ -2,6 +2,9 @@ const estraverse = require('estraverse');
 const esprima = require('esprima')
 let escodegen = require('escodegen')
 
+// crafted module
+const { setDefaults } = require("../util/util")
+
 const compareOptions = [">", "<", "=="]
 const operandsOptions = ["+", "-", "*", "/"]
 
@@ -128,14 +131,24 @@ function extendCondition(node) {
     })
 }
 
+// default options
+let defaults = {
+    addDeadCode: true,
+    addRedundantOperand: true,
+    extendCondition: true
+};
+module.exports.computationalTransform = function (tree, options = defaults) {
+    options = setDefaults(options, defaults);
 
-module.exports.computationalTransform = function (tree) {
     estraverse.traverse(tree, {
         enter: function (node, parent) {
             if (node.type == "FunctionDeclaration") {
-                addDeadCode(node)
-                addRedundantOperand(node)
-                extendCondition(node)
+                if (options.addDeadCode)
+                    addDeadCode(node)
+                if (options.addRedundantOperand)
+                    addRedundantOperand(node)
+                if (options.extendCondition)
+                    extendCondition(node)
             }
         }
     })
