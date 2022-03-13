@@ -9,7 +9,23 @@ npm install
 Put some sample code inside the file `/sample/sample.js`. Then run the following command.
 ```
 node index.js
-```
+```  
+For more custom option, edit the option inside `index.js` which is shown in below code block.  
+``` JS
+computationalTransform(tree, {
+  addDeadCode: true,
+  addRedundantOperand: true,
+  extendCondition: true,
+});
+aggegationTransform(tree, {
+    cloneCode: true,
+    interleavingCode: true,
+    inLiningCode: true
+})
+computationalTransform(tree, {addDeadCode: true}) // add more rows :))
+orderingCode(tree)
+```  
+You can ordering the transformation order or chossing which technique will be used in each transformation.  
 The obfuscated code will output inside folder `/out/`. For this period of the project, the sample code will go through 2 rounds and generate 2 files after each round include: one for is the code after obfuscated and one for the code after obfuscated and minifying.
 
 # Example
@@ -29,7 +45,7 @@ console.log(total)
 let sum = substract(20, 10)
 console.log(sum)
 ```  
-The obfuscated code  
+The obfuscated code (computational transform)  
 ```JS
 function multiply(num1, num2) {
     let mshwS = 5762;
@@ -60,7 +76,7 @@ console.log(total);
 let sum = substract(20, 10);
 console.log(sum);
 ```  
-Obfuscated and Minimize code  
+Obfuscated (computational transform) and Minimize code  
 ```JS
 function e(e,t){let l=5762;if(l<5761.629888227067&&2363==2363){l+=.9799777525989692;let e=l;return e-=7155,e+7155}let n=e*t;return n*=8950,n/8950}function t(e,t){let l=4649;if(l<4648.948586654794&&5392<5392.588184525474){l+=.03740530634496242;let e=l;return e+=5205,e-5205}let n=e-t;return n*=6935,n/6935}let l=e(10,20);console.log(l);let n=t(20,10);console.log(n);
 ```
