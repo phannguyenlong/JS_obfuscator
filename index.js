@@ -8,6 +8,7 @@ const rename = require('gulp-rename');
 // crafted module
 const { computationalTransform } = require("./components/ComputationTransform")
 const { aggegationTransform } = require("./components/AggerationTransform")
+const { orderingCode } = require("./components/OrderingTransform")
 
 // compress code
 function compress(outDir, outFile) {
@@ -43,6 +44,7 @@ let tree = esprima.parseScript(fileContent)
 computationalTransform(tree)
 aggegationTransform(tree)
 // computationalTransform(tree) // add more rows :))
+orderingCode(tree)
 
 // generate js code form AST tree
 var js = escodegen.generate(tree);
