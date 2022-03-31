@@ -3,7 +3,7 @@ const esprima = require('esprima')
 let escodegen = require('escodegen')
 
 // crafted module
-const { generateString, generateNumber, setDefaults } = require('../util/util')
+const { generateString, generateNumber, setDefaults } = require('../../util/util')
 
 /**
  * Group irrelevant code to a function

@@ -3,7 +3,7 @@ const esprima = require('esprima')
 let escodegen = require('escodegen')
 
 // crafted module
-const { setDefaults } = require("../util/util")
+const { setDefaults } = require("../../util/util")
 
 const compareOptions = [">", "<", "=="]
 const operandsOptions = ["+", "-", "*", "/"]

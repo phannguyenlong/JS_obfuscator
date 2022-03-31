@@ -6,9 +6,9 @@ const terser = require('gulp-terser');
 const rename = require('gulp-rename');
 
 // crafted module
-const { computationalTransform } = require("./components/ComputationTransform")
-const { aggegationTransform } = require("./components/AggerationTransform")
-const { orderingCode } = require("./components/OrderingTransform")
+const { computationalTransform } = require("./components/control/ComputationTransform")
+const { aggegationTransform } = require("./components/control/AggerationTransform")
+const { orderingCode } = require("./components/control/OrderingTransform")
 
 // compress code
 function compress(outDir, outFile) {
