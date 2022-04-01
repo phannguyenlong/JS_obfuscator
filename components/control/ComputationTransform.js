@@ -81,7 +81,7 @@ function addRedundantOperand(node) {
                         oppositeOperandsValue = operandsValue == "*" ? "/" : "*"
                     
                     // genereate code and node
-                    let insertCode = `let ${randomVarName}=${escodegen.generate(node.argument)}\n${randomVarName}=${randomVarName}${operandsValue}${randomNum}\nreturn ${randomVarName}${oppositeOperandsValue}${randomNum}`
+                    let insertCode = `if (typeof ${node.argument.name} == "name") {let ${randomVarName}=${escodegen.generate(node.argument)}\n${randomVarName}=${randomVarName}${operandsValue}${randomNum}\nreturn ${randomVarName}${oppositeOperandsValue}${randomNum}}else {return ${node.argument.name}}`
                     let insertNode = esprima.parseScript(insertCode, { tolerant: true }) // alow tolerant for bypass error checking
                     
                     // add code to function before return statment
