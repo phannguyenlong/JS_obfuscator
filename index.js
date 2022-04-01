@@ -6,9 +6,12 @@ const terser = require('gulp-terser');
 const rename = require('gulp-rename');
 
 // crafted module
+// control
 const { computationalTransform } = require("./components/control/ComputationTransform")
 const { aggegationTransform } = require("./components/control/AggerationTransform")
 const { orderingCode } = require("./components/control/OrderingTransform")
+// data
+const { storageAndEncodingTransform } = require("./components/data/StorageAndEncoding")
 
 // compress code
 function compress(outDir, outFile) {
@@ -34,7 +37,7 @@ function compress(outDir, outFile) {
 }
 
 // read and parse orginal code
-let inputFile = "./sample/5_func_sample.js"
+let inputFile = "./sample/string_sample.js"
 let outputFile = "./out/obfus_sample.js"
 let outDir = "./out"
 let fileContent = fs.readFileSync(inputFile, 'utf-8')
@@ -51,8 +54,11 @@ aggegationTransform(tree, {
     interleavingCode: true,
     inLiningCode: true
 })
-computationalTransform(tree, {addDeadCode: true}) // add more rows :))
+// computationalTransform(tree, {addDeadCode: true}) // add more rows :))
 orderingCode(tree)
+
+// perfrorm data transform
+storageAndEncodingTransform(tree)
 
 // generate js code form AST tree
 var js = escodegen.generate(tree);
