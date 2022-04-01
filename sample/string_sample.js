@@ -13,7 +13,22 @@ function sayAge(age) {
     }
 }
 
+function test(num) {
+    let i = 0
+    let bool = false
+    while (!(bool)) {
+        i++
+        console.log(i)
+        if (i == num)
+            bool = true
+        else if (i > num)
+            bool = bool && true
+    }
+    console.log(bool)
+}
+
 let greeting = sayHello("Long")
 console.log(greeting)
 let age = 22
 sayAge(22)
+test(20)

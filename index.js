@@ -39,7 +39,6 @@ function compress(outDir, outFile) {
 // read and parse orginal code
 let inputFile = "./sample/string_sample.js"
 let outputFile = "./out/obfus_sample.js"
-let outDir = "./out"
 let fileContent = fs.readFileSync(inputFile, 'utf-8')
 let tree = esprima.parseScript(fileContent)
 
@@ -67,4 +66,4 @@ console.log(js)
 fs.writeFileSync(outputFile, js);
 
 // compress
-compress(outDir, outputFile)
+// compress(outDir, outputFile)
