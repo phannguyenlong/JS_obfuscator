@@ -3,7 +3,7 @@ const esprima = require('esprima')
 let escodegen = require('escodegen')
 
 // crafted module
-const { generateString, decimalToHexString } = require("../../util/util")
+const { generateString, generateStringFullChar } = require("../../util/util")
 
 /**
  * This function will in charfe of coding all orignal data
@@ -136,8 +136,130 @@ function booleanSplitting(node) {
     })
 }
 
+/**
+ * Split string into series of array with random size (10 - 50)
+ * Start with 3 array fill with junk data 
+ * Split word with length larger than 10 into 30 -> 50 in size and place randomly into arrays
+ * Number of array > number_of_word / 3 (disable cause not effitive => too many arraty)
+ * Instead, create a new array whenever an array is full
+ * @param {*} node root node of the program
+ */
 function stringSplitting(node) {
+    let listArr = {} // store array name and value
+    // create 3 first arrays
+    for (let i = 0; i < 3; i++) {
+        listArr[generateString(5)] = new Array(Math.floor(Math.random() * (50 - 30 + 1)) + 30)
+    }
+    let arrNames = Object.keys(listArr)
+    // let arrCounter = 3 // count number of arrays
+    // let wordCounter = 0 // count number of word
+    estraverse.replace(node, {
+        enter: function (node, parent) {
+            if (node.type == "Literal" && (typeof node.value) == "string") {
+                let insertCode ='', insertNode
+                if (node.value.length < 30) {
+                    // get random array
+                    let place = findEmptySlots(1, arrNames, listArr)
+                    listArr[place[0].name][place[0].index] = node.value
+                    // create code and replace
+                    insertCode = `${place[0].name}[${place[0].index}]`
+                    insertNode = esprima.parseScript(insertCode, { tolerant: true })
+                    // return insertNode.body[0].expression
+                }
+                else {
+                    // get random array
+                    let parts = slipStringIntoPart(node.value)
+                    let place = findEmptySlots(parts.length, arrNames, listArr)
+                    // create code and replace
+                    for (let i = 0; i < place.length; i++) {
+                        listArr[place[i].name][place[i].index] = parts[i]
+                        insertCode += `${place[i].name}[${place[i].index}]+`
+                    }
+                    insertCode = insertCode.slice(0, -1) // remove last +
+                    insertNode = esprima.parseScript(insertCode, { tolerant: true })
+                    // return insertNode.body[0].expression
+                }
+                // check Number of array > number_of_word / 3 (disable for now)
+                // wordCounter++
+                // if (Math.trunc(wordCounter / arrCounter) > 10) {
+                //     console.log('=============================')
+                //     // create new array
+                //     let name = generateString(5)
+                //     listArr[name] = new Array(Math.floor(Math.random() * (50 - 30 + 1)) + 30)
+                //     arrNames.push(name)
+                //     arrCounter++
+                // }
+                return insertNode.body[0].expression
+            }
+        }
+    })
+    // console.log(listArr)
+    fillEmptySlot(listArr)
 
+    // create array
+    let insertCode = ''
+    for (let arr in listArr) {
+        insertCode += `let ${arr} = ${JSON.stringify(listArr[arr])};`
+    }
+    let insertNode = esprima.parseScript(insertCode, { tolerant: true })
+    node.body = [...insertNode.body, ...node.body]
+}
+
+function fillEmptySlot(listArr) {
+    for (let arr in listArr) {
+        for (let i = 0; i < listArr[arr].length; i++) {
+            if (listArr[arr][i] == undefined)
+                // generate random char with length 5 -> 50
+                listArr[arr][i] = generateStringFullChar(Math.floor(Math.random() * (50 - 5 + 1)) + 5)
+        }
+    }
+}
+function findEmptySlots(num, arrNames, listArr) {
+    let slots = []
+    for (let i = 0; i < num; i++) {
+        while (true) {
+            // pick random Array
+            let index = Math.floor(Math.random() * (arrNames.length))
+            let arrName = arrNames[index]
+            console.log(index)
+            console.log(arrNames)
+            // check if array full or not (if yes, pop it out from arrNames)
+            if (!listArr[arrName].includes(undefined)) {
+                console.log('C')
+                // remove full array from arrNames
+                let index = arrNames.indexOf(arrName)
+                arrNames.splice(index, 1)
+                // create new array
+                let name = generateString(5)
+                listArr[name] = new Array(Math.floor(Math.random() * (50 - 30 + 1)) + 30)
+                arrNames.push(name)
+                continue // start find another array
+            }
+            // find empty slot
+            let arrPosition
+            while (true) {
+                arrPosition = Math.floor(Math.random() * listArr[arrName].length)
+                if (listArr[arrName][arrPosition] == undefined) 
+                    break
+            }
+            slots.push({ 'name': arrName, 'index': arrPosition })
+            break
+        }
+    }
+    return slots
+}
+function slipStringIntoPart(str) {
+    let parts = []
+    while (str.length) {
+        let substrSize = Math.floor(Math.random()*(100 - 30 + 1))+30; // at most 4? 
+        if (substrSize >= str.length)
+            randomChar = str;
+        else
+            randomChar = str.substr(0,substrSize);
+        str = str.substr(randomChar.length);
+        parts.push(randomChar)
+    }
+    return parts
 }
 
 module.exports.storageAndEncodingTransform = function (tree) {
@@ -146,6 +268,7 @@ module.exports.storageAndEncodingTransform = function (tree) {
             if (node.type == "Program") {
                 dataEncoding(node)
                 booleanSplitting(node)
+                stringSplitting(node)
             }
         }
     })
