@@ -132,15 +132,17 @@ function interleavingFunction(node, funcArr, is3Function) {
     ifBlock.alternate.consequent = funcArr[1].body // add function body to if stm
     if (is3Function) ifBlock.alternate.alternate = funcArr[2].body // for 3 func mode
     
-    // remove old function and change function call
+    // remove old function
     removeOldFunction(funcArr, node)
+    
+    // append new function to program
+    node.body = [...node.body, ...newFunctionNode.body]
+
+    // change function call 
     if (is3Function) // for 3 func mode
         changeFunctionCall(newFunctionNode, funcArr, node, typeVal1, typeVal2, typeVal3)
     else
         changeFunctionCall(newFunctionNode, funcArr, node, typeVal1, typeVal2)
-
-    // append new function to program
-    node.body = [...node.body, ...newFunctionNode.body]
 }
 
 // function for changing name of variable inside a node
