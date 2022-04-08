@@ -12,6 +12,8 @@ const { aggegationTransform } = require("./components/control/AggerationTransfor
 const { orderingCode } = require("./components/control/OrderingTransform")
 // data
 const { storageAndEncodingTransform } = require("./components/data/StorageAndEncoding")
+// scheme
+const { advanceScheme } = require("./advance_scheme")
 
 // compress code
 function compress(outDir, outFile) {
@@ -44,21 +46,24 @@ let fileContent = fs.readFileSync(inputFile, 'utf-8')
 let tree = esprima.parseScript(fileContent)
 
 // perform computationalTransform
-computationalTransform(tree, {
-  addDeadCode: true,
-  addRedundantOperand: true,
-  extendCondition: true,
-});
-aggegationTransform(tree, {
-    cloneCode: true,
-    interleavingCode: true,
-    inLiningCode: true
-})
+// computationalTransform(tree, {
+//   addDeadCode: true,
+//   addRedundantOperand: true,
+//   extendCondition: true,
+// });
+// aggegationTransform(tree, {
+//     cloneCode: true,
+//     interleavingCode: true,
+//     inLiningCode: true
+// })
 // computationalTransform(tree, {addDeadCode: true}) // add more rows :))
-orderingCode(tree)
+// orderingCode(tree)
 
 // perfrorm data transform
-storageAndEncodingTransform(tree)
+// storageAndEncodingTransform(tree)
+
+// run custom scheme
+advanceScheme(tree)
 
 // generate js code form AST tree
 var js = escodegen.generate(tree);
